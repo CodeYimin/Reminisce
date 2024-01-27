@@ -1,19 +1,16 @@
+import { registerRootComponent } from "expo";
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, Text, View } from "react-native";
 
-// import components
-// import Navbar from "./components/navbar.js";
+function App() {
+  const URL = "100.67.11.186:4000";
 
-export default function App() {
-  fetch("http://localhost:4000");
+  fetch(`http://${URL}`).then((r) => r.text().then(console.log));
 
   return (
     <View style={styles.container}>
       <Text>Open up App.tsx to start working on your app!</Text>
       <StatusBar style="auto" />
-
-      {/* bottom */}
-      {/* <Navbar /> */}
     </View>
   );
 }
@@ -26,3 +23,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 });
+
+export default registerRootComponent(App);

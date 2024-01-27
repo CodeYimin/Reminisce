@@ -1,0 +1,37 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:mydb.db"
+}
+
+model User {
+  id String @id @default(cuid())
+
+  friends         User[] @relation("UserFriends")
+  friendsRelation User[] @relation("UserFriends")
+
+  incomingFriendRequests User[] @relation("UserFriendRequests")
+  outgoingFriendRequests User[] @relation("UserFriendRequests")
+
+  ownedPhotos  Photo[] @relation("UserOwnedPhotos")
+  taggedPhotos Photo[] @relation("UserTaggedPhotos")
+}
+
+model Photo {
+  id          String   @id @default(cuid())
+  timeCreated DateTime @default(now())
+
+  location String
+  data     String
+
+  ownerId String
+  owner   User   @relation("UserOwnedPhotos", fields: [ownerId], references: [id])
+
+  taggedUsers User[] @relation("UserTaggedPhotos")
+}

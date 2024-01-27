@@ -26,17 +26,35 @@ async function start() {
   });
 
   app.post("/uploadPhoto", async (req, res) => {
-    console.log(req.body);
+    const { data, location } = req.body as {
+      data: string;
+      location: {
+        coords: {
+          longitude: number;
+          latitude: number;
+        };
+      };
+    };
+
+    if (!data || !location) {
+      res.sendStatus(400);
+      return;
+    }
+
+    console.log(
+      `New photo ${location.coords.latitude} ${location.coords.longitude}`
+    );
+
     await fs.writeFile(
       "photo.jpg",
-      req.body.data.replace(/^data:image\/png;base64,/, ""),
+      data.replace(/^data:image\/png;base64,/, ""),
       "base64"
     );
   });
 
   app.post("/location", async (req, res) => {
     const data = req.body;
-    console.log(data);
+    console.log("New location");
   });
 
   app.post("/register", async (req, res) => {

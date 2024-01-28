@@ -2,7 +2,6 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import express from "express";
 import session from "express-session";
-import fs from "fs/promises";
 import { db } from "./db";
 
 async function start() {
@@ -26,7 +25,33 @@ async function start() {
   });
 
   app.post("/uploadPhoto", async (req, res) => {
-    const { data, location } = req.body as {
+    const userId = (req as any).session.userId;
+
+    if (!userId) {
+      res.sendStatus(400);
+      return;
+    }
+
+    const user = await db.user.findUnique({
+      where: {
+        id: userId,
+      },
+      include: {
+        incomingFriendRequests: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      res.sendStatus(400);
+      return;
+    }
+
+    const { data, location, taggedUserIds } = req.body as {
       data: string;
       location: {
         coords: {
@@ -34,27 +59,272 @@ async function start() {
           latitude: number;
         };
       };
+      taggedUserIds: string[];
     };
 
-    if (!data || !location) {
+    if (!data || !location || !taggedUserIds) {
       res.sendStatus(400);
       return;
     }
 
-    console.log(
-      `New photo ${location.coords.latitude} ${location.coords.longitude}`
-    );
+    console.log(taggedUserIds);
 
-    await fs.writeFile(
-      "photo.jpg",
-      data.replace(/^data:image\/png;base64,/, ""),
-      "base64"
-    );
+    await db.photo.create({
+      data: {
+        data: data,
+        ownerId: user.id,
+        location: JSON.stringify(location),
+        taggedUsers: {
+          connect: taggedUserIds.map((taggedUserId) => ({ id: taggedUserId })),
+        },
+      },
+    });
+
+    res.sendStatus(200);
   });
 
   app.post("/location", async (req, res) => {
     const data = req.body;
     console.log("New location");
+
+    res.sendStatus(200);
+  });
+
+  app.get("/getFriends", async (req, res) => {
+    const userId = (req as any).session.userId;
+
+    if (!userId) {
+      res.sendStatus(400);
+      return;
+    }
+
+    const user = await db.user.findUnique({
+      where: {
+        id: userId,
+      },
+      include: {
+        friends: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      res.sendStatus(400);
+      return;
+    }
+
+    res.send(user.friends);
+  });
+
+  app.get("/getFriendRequests", async (req, res) => {
+    const userId = (req as any).session.userId;
+
+    if (!userId) {
+      res.sendStatus(400);
+      return;
+    }
+
+    const user = await db.user.findUnique({
+      where: {
+        id: userId,
+      },
+      include: {
+        incomingFriendRequests: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      res.sendStatus(400);
+      return;
+    }
+
+    res.send(user.incomingFriendRequests);
+  });
+
+  app.post("/acceptFriendRequest", async (req, res) => {
+    const userId = (req as any).session.userId;
+    const { otherId } = req.body;
+
+    if (!userId || !otherId) {
+      res.sendStatus(400);
+      return;
+    }
+
+    const user = await db.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+
+    const other = await db.user.findUnique({
+      where: {
+        id: otherId,
+      },
+    });
+
+    if (!user || !other || user.id === other.id) {
+      res.sendStatus(400);
+      return;
+    }
+
+    await db.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        friends: {
+          connect: other,
+        },
+        friendsRelation: {
+          connect: other,
+        },
+        incomingFriendRequests: {
+          disconnect: other,
+        },
+      },
+    });
+
+    res.sendStatus(200);
+  });
+
+  app.post("/delineFriendRequest", async (req, res) => {
+    const userId = (req as any).session.userId;
+    const { otherId } = req.body;
+
+    if (!userId || !otherId) {
+      res.sendStatus(400);
+      return;
+    }
+
+    const user = await db.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+
+    const other = await db.user.findUnique({
+      where: {
+        id: otherId,
+      },
+    });
+
+    if (!user || !other || user.id === other.id) {
+      res.sendStatus(400);
+      return;
+    }
+
+    await db.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        incomingFriendRequests: {
+          disconnect: other,
+        },
+      },
+    });
+
+    res.sendStatus(200);
+  });
+
+  app.post("/removeFriend", async (req, res) => {
+    const userId = (req as any).session.userId;
+    const { otherId } = req.body;
+
+    if (!userId || !otherId) {
+      res.sendStatus(400);
+      return;
+    }
+
+    const user = await db.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+
+    const other = await db.user.findUnique({
+      where: {
+        id: otherId,
+      },
+    });
+
+    if (!user || !other || user.id === other.id) {
+      res.sendStatus(400);
+      return;
+    }
+
+    await db.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        friends: {
+          disconnect: other,
+        },
+        friendsRelation: {
+          disconnect: other,
+        },
+      },
+    });
+
+    res.sendStatus(200);
+  });
+
+  app.post("/sendFriendRequest", async (req, res) => {
+    const userId = (req as any).session.userId;
+    const { otherUsername } = req.body;
+
+    if (!userId || !otherUsername) {
+      res.sendStatus(400);
+      return;
+    }
+
+    const user = await db.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+
+    const other = await db.user.findUnique({
+      where: {
+        username: otherUsername,
+      },
+      include: {
+        friends: true,
+      },
+    });
+
+    if (
+      !user ||
+      !other ||
+      user.id === other.id ||
+      other.friends.some((f) => f.id === user.id)
+    ) {
+      res.sendStatus(400);
+      return;
+    }
+
+    await db.user.update({
+      where: {
+        id: other.id,
+      },
+      data: {
+        incomingFriendRequests: {
+          connect: user,
+        },
+      },
+    });
+
+    res.sendStatus(200);
   });
 
   app.post("/register", async (req, res) => {

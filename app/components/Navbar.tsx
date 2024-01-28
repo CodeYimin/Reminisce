@@ -1,5 +1,6 @@
 import { css } from "@emotion/native";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { TouchableOpacity, View } from "react-native";
 
 export default function Navbar({
   onClick,
@@ -9,89 +10,48 @@ export default function Navbar({
   return (
     <View
       style={css`
-        background-color: black;
+        background-color: #222831;
         display: flex;
         flex-direction: row;
-        height: 150px;
+        height: 110px;
         width: 100%;
+        top: 750px;
+        // border-radius:20px;
       `}
     >
-      <TouchableOpacity
-        style={css`
-          background-color: blue;
-          width: 22.5%;
-          margin: 0 1.25%;
-        `}
-        onPress={() => onClick("register")}
-      >
-        <Text
+      {["register", "login", "friends", "camera"].map((section) => (
+        <TouchableOpacity
+          key={section}
           style={css`
-            margin: auto 0;
-            font-size: 20px;
-            color: white;
-            text-align: center;
+            background-color: #222831;
+            width: 22.5%;
+            margin: 0 1.25%;
+            align-items: center; // Center content horizontally
+            justify-content: center; // Center content vertically
+            margin-bottom: 30px;
+            // border-radius:20px;
           `}
+          onPress={() => onClick(section as any)}
         >
-          Register
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={css`
-          background-color: blue;
-          width: 22.5%;
-          margin: 0 1.25%;
-        `}
-        onPress={() => onClick("login")}
-      >
-        <Text
-          style={css`
-            margin: auto 0;
-            font-size: 20px;
-            color: white;
-            text-align: center;
-          `}
-        >
-          Login
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={css`
-          background-color: blue;
-          width: 22.5%;
-          margin: 0 1.25%;
-        `}
-        onPress={() => onClick("friends")}
-      >
-        <Text
-          style={css`
-            margin: auto 0;
-            font-size: 20px;
-            color: white;
-            text-align: center;
-          `}
-        >
-          Friends
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={css`
-          background-color: blue;
-          width: 22.5%;
-          margin: 0 1.25%;
-        `}
-        onPress={() => onClick("camera")}
-      >
-        <Text
-          style={css`
-            margin: auto 0;
-            font-size: 20px;
-            color: white;
-            text-align: center;
-          `}
-        >
-          Camera
-        </Text>
-      </TouchableOpacity>
+          <Ionicons name={getIconName(section)} size={24} color="white" />
+        </TouchableOpacity>
+      ))}
     </View>
   );
+}
+
+// Helper function to get the icon name based on the section
+function getIconName(section: string) {
+  switch (section) {
+    case "register":
+      return "person";
+    case "login":
+      return "log-in";
+    case "friends":
+      return "people";
+    case "camera":
+      return "camera";
+    default:
+      return "camera";
+  }
 }

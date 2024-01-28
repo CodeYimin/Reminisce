@@ -1,8 +1,9 @@
 import { css } from "@emotion/native";
+import { Ionicons } from "@expo/vector-icons";
 import { Camera, CameraCapturedPicture, CameraType } from "expo-camera";
 import { LocationObject, getLastKnownPositionAsync } from "expo-location";
 import { useRef, useState } from "react";
-import { Button, Text, TouchableOpacity, View } from "react-native";
+import { Button, Image, Text, TouchableOpacity, View } from "react-native";
 
 export default function CameraView({
   onPhoto,
@@ -11,6 +12,7 @@ export default function CameraView({
 }) {
   const [type, setType] = useState<CameraType>(CameraType.back);
   const [permission, requestPermission] = Camera.useCameraPermissions();
+  const [zoom, setZoom] = useState<number>(0);
   const cameraElement = useRef<Camera>(null);
 
   if (!permission) {
@@ -51,58 +53,100 @@ export default function CameraView({
     onPhoto(photo, location);
   }
 
+  function handleZoomIn() {
+    setZoom((prevZoom) => Math.min(prevZoom + 0.1, 1));
+  }
+
+  function handleZoomOut() {
+    setZoom((prevZoom) => Math.max(prevZoom - 0.1, 0));
+  }
+
   return (
     <View
       style={css`
         height: 700px;
         display: flex;
         flex-direction: column;
+        margin-top: -150px;
       `}
     >
+      <View
+        style={css`
+          height: 235px;
+          display: flex;
+          flex-direction: row;
+          background-color: #222831;
+        `}
+      >
+        <TouchableOpacity
+          style={css`
+            background-color: #222831;
+            margin-right: 3px;
+            margin-top: 100px;
+            padding: 10px;
+          `}
+          onPress={toggleCameraType}
+        >
+          <Ionicons name="camera-reverse" size={36} color="white" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleZoomIn}>
+          <Ionicons name="add" size={36} color="white" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleZoomOut}>
+          <Ionicons name="remove" size={36} color="white" />
+        </TouchableOpacity>
+        <Image
+          source={{ uri: "../assets/icon.png" }}
+          style={{
+            width: 50, // Set your desired width
+            height: 50, // Set your desired height
+            marginRight: 10, // Adjust the margin as needed
+          }}
+        />
+      </View>
+      <View
+        style={css`
+          background-color: #222831;
+          display: flex;
+          width: 100%;
+        `}
+      ></View>
       <Camera
         ref={(ref: any) => {
           // @ts-ignore
           cameraElement.current = ref;
         }}
         type={type}
+        zoom={zoom}
         style={css`
           width: 100%;
           height: 80%;
+          display: flex;
+          bottom: 60px;
         `}
       />
       <View
         style={css`
           display: flex;
           flex-direction: row;
-          background-color: green;
+          background-color: #222831;
           justify-content: center;
           align-items: center;
           flex-grow: 1;
+          display: flex;
+          bottom: 60px;
         `}
       >
         <TouchableOpacity
           style={css`
-            background-color: blue;
-            margin-right: 3px;
-          `}
-          onPress={toggleCameraType}
-        >
-          <Text
-            style={css`
-              font-size: 36px;
-              color: white;
-            `}
-          >
-            Flip Camera
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={css`
-            width: 70px;
-            height: 70px;
+            width: 54px;
+            height: 54px;
             bottom: 0;
             border-radius: 50px;
-            background-color: #fff;
+            background-color: #eeeeee;
+            border-width: 5px;
+            border-color: #414a4c;
+            margin-top: 8px;
           `}
           onPress={takePicture}
         >

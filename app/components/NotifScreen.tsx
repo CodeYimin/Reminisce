@@ -54,29 +54,39 @@ export default function NotifScreen({
   }, []);
 
   return (
-    <View>
-      <Image source={{ uri: photo, height: 400 }} />
+    <View
+      style={css`
+        background-color: #222831;
+        padding: 15px;
+        width: 100%;
+      `}
+    >
       <View
         style={css`
           display: flex;
           flex-direction: row;
-          border: 3px green solid;
+          border: 1px white solid;
+          margin-top: 30px;
+          border-radius: 15px;
         `}
       >
         <TextInput
           style={css`
             margin: 10px;
             flex-grow: 1;
+            border-radius: 15px;
+            color: white;
           `}
           placeholder="Send message..."
-          placeholderTextColor="green"
+          placeholderTextColor="white"
           value={messageSending}
           onChangeText={setMessageSending}
         />
         <TouchableOpacity
           style={css`
-            border: 3px solid black;
+            border: 1px solid white;
             padding: 0 30px;
+            border-radius: 15px;
           `}
           onPress={async () => {
             setMessageSending("");
@@ -96,6 +106,7 @@ export default function NotifScreen({
           <Text
             style={css`
               margin: auto;
+              color: white;
             `}
           >
             Send
@@ -104,7 +115,8 @@ export default function NotifScreen({
       </View>
       <View
         style={css`
-          height: 35%;
+          height: 31%;
+          margin-top: 15px;
         `}
       >
         <ScrollView>
@@ -113,16 +125,25 @@ export default function NotifScreen({
               style={css`
                 display: flex;
                 flex-direction: column;
-                border: 3px solid black;
-                padding: 15px;
-                margin: 15px;
+                border: 1px solid white;
+                padding: 5px 15px;
+                margin: 5px 15px;
+                border-radius: 15px;
               `}
               key={m.id}
             >
-              <Text>{m.owner.user.username}</Text>
               <Text
                 style={css`
-                  font-size: 25px;
+                  color: white;
+                  font-size: 10px;
+                `}
+              >
+                {m.owner.user.username}
+              </Text>
+              <Text
+                style={css`
+                  font-size: 15px;
+                  color: white;
                 `}
               >
                 {m.content}
@@ -130,6 +151,13 @@ export default function NotifScreen({
             </View>
           ))}
         </ScrollView>
+      </View>
+      <View
+        style={css`
+          margin: 15px;
+        `}
+      >
+        <Image source={{ uri: photo, height: 350 }} borderRadius={15} />
       </View>
       <View
         style={css`

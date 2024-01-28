@@ -37,58 +37,53 @@ export default function PhotoTakenPopup({
     <View
       style={css`
         position: absolute;
-        top: 2%;
-        left: 5%;
-        width: 90%;
-        background-color: black;
-        height: 95%;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background-color: #222831;
+        height: 1000px;
       `}
     >
       <ScrollView style={css``}>
-        <TouchableOpacity
-          style={css`
-            background-color: white;
-            height: 50px;
-          `}
-          onPress={onClose}
-        >
-          <Text
-            style={css`
-              margin: auto 0;
-              text-align: center;
-              font-size: 25px;
-            `}
-          >
-            X
-          </Text>
-        </TouchableOpacity>
-        <Image
-          source={{
-            uri: photoUri,
-            height: 400,
-          }}
-        />
         <View
           style={css`
-            background-color: white;
+            margin: 15px;
+          `}
+        >
+          <Image
+            source={{
+              uri: photoUri,
+              height: 350,
+            }}
+            borderRadius={15}
+          />
+        </View>
+        <View
+          style={css`
+            /* background-color: white; */
           `}
         >
           <Text
             style={css`
               text-align: center;
               font-size: 30px;
-              color: red;
+              color: white;
             `}
           >
-            Add your friends to your photo
+            Add friends to your photo!
           </Text>
           <TextInput
             style={css`
-              border: 3px green solid;
-              margin: 10px;
+              display: flex;
+              flex-direction: row;
+              border: 2px #eeeeee solid;
+              border-radius: 15px;
+              padding: 15px;
+              margin: 15px;
+              color: white;
             `}
-            placeholder="Username"
-            placeholderTextColor="green"
+            placeholder="Filter Username..."
+            placeholderTextColor="white"
             value={friendFilter}
             onChangeText={setFriendFilter}
           />
@@ -102,22 +97,25 @@ export default function PhotoTakenPopup({
                   align-items: center;
                   justify-content: space-between;
                   padding: 20px;
-                  border: 3px black solid;
+                  border: 1px white solid;
                   margin: 10px;
+                  border-radius: 15px;
                 `}
               >
                 <Text
                   style={css`
                     text-align: center;
                     font-size: 30px;
+                    color: white;
                   `}
                 >
                   {friend.username}
                 </Text>
                 <TouchableOpacity
                   style={css`
-                    border: 1px black solid;
+                    border: 1px white solid;
                     padding: 10px;
+                    border-radius: 15px;
                   `}
                   onPress={() => {
                     if (!friendsAdded.includes(friend.id)) {
@@ -129,29 +127,65 @@ export default function PhotoTakenPopup({
                     }
                   }}
                 >
-                  <Text>
+                  <Text
+                    style={css`
+                      color: white;
+                    `}
+                  >
                     {friendsAdded.includes(friend.id) ? "Remove" : "Add"}
                   </Text>
                 </TouchableOpacity>
               </View>
             ))}
-          <TouchableOpacity
+          <View
             style={css`
-              margin: 0 auto;
-              background-color: blue;
+              display: flex;
+              flex-direction: row;
+              justify-content: center;
             `}
           >
-            <Text
+            <TouchableOpacity
               style={css`
-                text-align: center;
-                font-size: 50px;
-                color: white;
+                border: 1px white solid;
+                border-radius: 15px;
+                padding: 15px;
+                width: 50%;
+                margin: 15px;
               `}
-              onPress={() => onSave(friendsAdded)}
             >
-              Save
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={css`
+                  text-align: center;
+                  font-size: 30px;
+                  color: white;
+                `}
+                onPress={() => onSave(friendsAdded)}
+              >
+                Save
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={css`
+                border: 1px #9d9d9d solid;
+                border-radius: 15px;
+                padding: 15px;
+                flex-grow: 1;
+                margin: 15px;
+              `}
+              onPress={onClose}
+            >
+              <Text
+                style={css`
+                  margin: auto 0;
+                  text-align: center;
+                  font-size: 30px;
+                  color: #9d9d9d;
+                `}
+              >
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </View>

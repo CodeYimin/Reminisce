@@ -110,6 +110,13 @@ export default function App() {
               setPhoto({ ...photo, location: location });
             }}
           />
+          {/* <PhotoTakenPopup
+            photoUri={
+              "https://img.freepik.com/free-photo/painting-mountain-lake-with-mountain-background_188544-9126.jpg"
+            }
+            onClose={() => {}}
+            onSave={() => {}}
+          /> */}
           {photo && (
             <PhotoTakenPopup
               photoUri={`data:image/jpg;base64,${photo.base64}`}

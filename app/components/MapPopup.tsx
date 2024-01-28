@@ -40,9 +40,9 @@ export default function MapPopup({
         position: absolute;
         top: 0;
         left: 0;
-        width: 100%;
+        width: 108%;
         background-color: black;
-        height: 80%;
+        height: 85%;
       `}
     >
       <MapView

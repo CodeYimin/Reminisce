@@ -1,8 +1,16 @@
+import axios from "axios";
 import bodyParser from "body-parser";
 import cors from "cors";
 import express from "express";
 import session from "express-session";
+import { getDistance } from "geolib";
 import { db } from "./db";
+
+interface Location {
+  longitude: number;
+  latitude: number;
+  time: number;
+}
 
 async function start() {
   const PORT = 4000;
@@ -38,14 +46,30 @@ async function start() {
         photo: includePhoto === "1",
         messages: {
           include: {
-            owner: true,
+            owner: {
+              select: {
+                user: {
+                  select: {
+                    id: true,
+                    username: true,
+                  },
+                },
+              },
+            },
           },
           orderBy: {
             createdAt: "desc",
           },
         },
         recipients: {
-          select: { id: true, username: true },
+          select: {
+            user: {
+              select: { id: true, username: true },
+            },
+            sharingLocation: true,
+            longitude: true,
+            latitude: true,
+          },
         },
       },
     });
@@ -55,24 +79,20 @@ async function start() {
       return;
     }
 
-    res.send(notification);
+    res.send({
+      ...notification,
+      recipients: notification.recipients.map((r) => ({
+        ...r,
+        longitude: r.sharingLocation ? r.longitude?.toNumber() : undefined,
+        latitude: r.sharingLocation ? r.latitude?.toNumber() : undefined,
+      })),
+    });
   });
 
   app.post("/sendNotificationMessage", async (req, res) => {
     const userId = (req as any).session.userId;
 
     if (!userId) {
-      res.sendStatus(400);
-      return;
-    }
-
-    const user = await db.user.findUnique({
-      where: {
-        id: userId,
-      },
-    });
-
-    if (!user) {
       res.sendStatus(400);
       return;
     }
@@ -87,11 +107,64 @@ async function start() {
       return;
     }
 
+    const user = await db.notificationUser.findFirst({
+      where: {
+        userId: userId,
+        notificationId: notificationId,
+      },
+    });
+
+    if (!user) {
+      res.sendStatus(400);
+      return;
+    }
+
     await db.message.create({
       data: {
         content: message,
-        ownerId: userId,
+        ownerId: user.id,
         notificationId: notificationId,
+      },
+    });
+
+    res.sendStatus(200);
+  });
+
+  app.post("/toggleVisibility", async (req, res) => {
+    const userId = (req as any).session.userId;
+
+    if (!userId) {
+      res.sendStatus(400);
+      return;
+    }
+
+    const { notificationId } = req.body as {
+      notificationId: string;
+    };
+
+    if (!notificationId) {
+      res.sendStatus(400);
+      return;
+    }
+
+    const user = await db.notificationUser.findFirst({
+      where: {
+        userId: userId,
+        notificationId: notificationId,
+      },
+    });
+
+    if (!user) {
+      res.sendStatus(400);
+      return;
+    }
+
+    await db.notificationUser.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        sharingLocation: !user.sharingLocation,
       },
     });
 
@@ -141,13 +214,12 @@ async function start() {
       return;
     }
 
-    console.log(taggedUserIds);
-
     await db.photo.create({
       data: {
         data: data,
         ownerId: user.id,
-        location: JSON.stringify(location),
+        longitude: location.coords.longitude,
+        latitude: location.coords.latitude,
         taggedUsers: {
           connect: taggedUserIds.map((taggedUserId) => ({ id: taggedUserId })),
         },
@@ -157,9 +229,108 @@ async function start() {
     res.sendStatus(200);
   });
 
+  const userLocations: { [userId: string]: Location } = {};
+
+  setInterval(async () => {
+    const photos = await db.photo.findMany({
+      where: {
+        relived: false,
+      },
+      select: {
+        longitude: true,
+        latitude: true,
+        timeCreated: true,
+        owner: true,
+        taggedUsers: true,
+        id: true,
+      },
+    });
+
+    photos.forEach(async (photo) => {
+      const users = [photo.owner, ...photo.taggedUsers];
+
+      for (const user of users) {
+        if (userLocations[user.id]) {
+          console.log(
+            getDistance(
+              {
+                latitude: photo.latitude.toNumber(),
+                longitude: photo.longitude.toNumber(),
+              },
+              userLocations[user.id]
+            )
+          );
+        }
+        if (
+          !userLocations[user.id] ||
+          getDistance(
+            {
+              latitude: photo.latitude.toNumber(),
+              longitude: photo.longitude.toNumber(),
+            },
+            userLocations[user.id]
+          ) > 1000
+        ) {
+          return;
+        }
+      }
+
+      const notification = await db.notification.create({
+        data: {
+          photoId: photo.id,
+          recipients: {
+            create: users.map((u) => ({ userId: u.id })),
+          },
+        },
+      });
+
+      await db.photo.update({
+        where: { id: photo.id },
+        data: {
+          relived: true,
+        },
+      });
+
+      await Promise.all(
+        users.map((u) =>
+          axios.post(`https://app.nativenotify.com/api/indie/notification`, {
+            subID: u.id,
+            appId: 19139,
+            appToken: "DLvOby9T6bf4IVzrvpA6CN",
+            title: "Reminisce!",
+            message: "Relive a memory!",
+            pushData: `{ \"id\": "${notification.id}" }`,
+          })
+        )
+      );
+    });
+  }, 5000);
+
   app.post("/location", async (req, res) => {
     const data = req.body;
-    console.log("New location");
+
+    const userId = (req as any).session.userId;
+    if (!userId) {
+      res.sendStatus(400);
+      return;
+    }
+
+    userLocations[userId] = {
+      longitude: parseFloat(data.coords.longitude),
+      latitude: parseFloat(data.coords.latitude),
+      time: data.timestamp,
+    };
+
+    await db.notificationUser.updateMany({
+      where: {
+        sharingLocation: true,
+        userId: userId,
+      },
+      data: {
+        longitude: parseFloat(data.coords.longitude),
+        latitude: parseFloat(data.coords.latitude),
+      },
+    });
 
     res.sendStatus(200);
   });

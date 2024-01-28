@@ -25,13 +25,13 @@ async function setup() {
   // 1 define the task passing its name and a callback that will be called whenever the location changes
   TaskManager.defineTask(TASK_FETCH_LOCATION, async ({ data, error }) => {
     const [location] = (data as any).locations;
-    // await fetch(`http://${URL}/location`, {
-    //   method: "POST",
-    //   body: JSON.stringify(location),
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //   },
-    // });
+    await fetch(`http://${URL}/location`, {
+      method: "POST",
+      body: JSON.stringify(location),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
   });
 
   // 2 start the task
@@ -55,12 +55,26 @@ async function setup() {
 
 export default function App() {
   const [notificationId, setNotificationId] = useState<string>();
+  const [userId, setUserId] = useState<string>();
   registerNNPushToken(19139, "DLvOby9T6bf4IVzrvpA6CN"); // DO NOT TOUCH THIS LINE WHATEVER YOU DO
   useEffect(() => {
     setup();
     addNotificationResponseReceivedListener((response) => {
       setNotificationId(response.notification.request.content.data.id);
+      console.log(response.notification.request.content.data);
     });
+    const int = setInterval(async () => {
+      const location = await Location.getLastKnownPositionAsync();
+      await fetch(`http://${URL}/location`, {
+        method: "POST",
+        body: JSON.stringify(location),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    }, 5000);
+
+    return () => clearInterval(int);
   }, []);
 
   const [photo, setPhoto] = useState<
@@ -74,6 +88,7 @@ export default function App() {
     return (
       <NotifScreen
         notificationId={notificationId}
+        userId={userId || ""}
         onExit={() => setNotificationId(undefined)}
       />
     );
@@ -103,7 +118,7 @@ export default function App() {
                 const res = await fetch(`http://${URL}/uploadPhoto`, {
                   method: "POST",
                   body: JSON.stringify({
-                    data: `data:image/jpg;base64,${photo.uri}`,
+                    data: `data:image/jpg;base64,${photo.base64}`,
                     location: photo.location,
                     taggedUserIds: friendsAdded,
                   }),
@@ -157,7 +172,7 @@ export default function App() {
                 19139,
                 "DLvOby9T6bf4IVzrvpA6CN"
               );
-              console.log(1);
+              setUserId((await res.json()).id);
               return true;
             } else {
               return false;
@@ -165,6 +180,7 @@ export default function App() {
           }}
         />
       ) : null}
+      {/* <MapPopup /> */}
 
       {/* <ProfileScreen /> */}
     </View>

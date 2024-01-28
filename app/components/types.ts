@@ -5,15 +5,23 @@ export interface User {
 
 export interface Message {
   owner: {
-    id: string;
-    username: string;
-    password: string;
+    user: {
+      id: string;
+      username: string;
+    };
   };
   id: string;
-  ownerId: string;
-  notificationId: string;
+  createdAt: Date;
   content: string;
-  createdAt: string;
+}
+
+export interface NotificationUser {
+  longitude: number | null;
+  latitude: number | null;
+  user: {
+    id: string;
+    username: string;
+  };
 }
 
 export interface INotification {
@@ -26,5 +34,5 @@ export interface INotification {
     ownerId: string;
   };
   messages: Message[];
-  recipients: User[];
+  recipients: NotificationUser[];
 }

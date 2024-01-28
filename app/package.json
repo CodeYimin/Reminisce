@@ -29,6 +29,7 @@
     "native-notify": "^3.2.7",
     "react": "18.2.0",
     "react-native": "0.73.2",
+    "react-native-maps": "^1.10.0",
     "typescript": "^5.1.3"
   },
   "private": true

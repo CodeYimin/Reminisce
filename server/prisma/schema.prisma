@@ -24,16 +24,18 @@ model User {
   ownedPhotos  Photo[] @relation("UserOwnedPhotos")
   taggedPhotos Photo[] @relation("UserTaggedPhotos")
 
-  messages      Message[]      @relation()
-  notifications Notification[] @relation()
+  notificationUsers NotificationUser[] @relation()
 }
 
 model Photo {
   id          String   @id @default(cuid())
   timeCreated DateTime @default(now())
 
-  location String
-  data     String
+  relived Boolean @default(false)
+
+  longitude Decimal
+  latitude  Decimal
+  data      String
 
   ownerId String
   owner   User   @relation("UserOwnedPhotos", fields: [ownerId], references: [id])
@@ -48,8 +50,24 @@ model Notification {
   photoId String
   photo   Photo  @relation(fields: [photoId], references: [id])
 
-  recipients User[]    @relation()
-  messages   Message[] @relation()
+  recipients NotificationUser[] @relation()
+  messages   Message[]          @relation()
+}
+
+model NotificationUser {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  notificationId String
+  notification   Notification @relation(fields: [notificationId], references: [id])
+
+  sharingLocation Boolean  @default(true)
+  longitude       Decimal?
+  latitude        Decimal?
+
+  messages Message[] @relation()
 }
 
 model Message {
@@ -59,7 +77,7 @@ model Message {
   content String
 
   ownerId String
-  owner   User   @relation(fields: [ownerId], references: [id])
+  owner   NotificationUser @relation(fields: [ownerId], references: [id])
 
   notificationId String
   notification   Notification @relation(fields: [notificationId], references: [id])

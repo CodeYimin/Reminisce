@@ -79,6 +79,7 @@ export default function Navbar({
           width: 22.5%;
           margin: 0 1.25%;
         `}
+        onPress={() => onClick("camera")}
       >
         <Text
           style={css`
@@ -87,7 +88,6 @@ export default function Navbar({
             color: white;
             text-align: center;
           `}
-          onPress={() => onClick("camera")}
         >
           Camera
         </Text>

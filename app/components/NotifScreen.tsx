@@ -8,20 +8,24 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import MapPopup from "./MapPopup";
 import { URL } from "./consts";
-import { INotification, Message, User } from "./types";
+import { INotification, Message, NotificationUser } from "./types";
 
 export default function NotifScreen({
   notificationId,
   onExit,
+  userId,
 }: {
   notificationId: string;
   onExit: () => void;
+  userId: string;
 }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [photo, setPhoto] = useState<string>();
-  const [users, setUsers] = useState<User[]>();
+  const [users, setUsers] = useState<NotificationUser[]>([]);
   const [messageSending, setMessageSending] = useState<string>("");
+  const [mapOpen, setMapOpen] = useState<boolean>(false);
 
   useEffect(() => {
     (async () => {
@@ -41,6 +45,7 @@ export default function NotifScreen({
       const data = (await res.json()) as INotification;
 
       setMessages(data.messages);
+      setUsers(data.recipients);
     }, 1000);
 
     return () => {
@@ -50,7 +55,7 @@ export default function NotifScreen({
 
   return (
     <View>
-      <Image source={{ uri: `data:image/jpg;base64,${photo}`, height: 400 }} />
+      <Image source={{ uri: photo, height: 400 }} />
       <View
         style={css`
           display: flex;
@@ -99,7 +104,7 @@ export default function NotifScreen({
       </View>
       <View
         style={css`
-          height: 40%;
+          height: 35%;
         `}
       >
         <ScrollView>
@@ -114,10 +119,10 @@ export default function NotifScreen({
               `}
               key={m.id}
             >
-              <Text>{m.owner.username}</Text>
+              <Text>{m.owner.user.username}</Text>
               <Text
                 style={css`
-                  font-size: 20px;
+                  font-size: 25px;
                 `}
               >
                 {m.content}
@@ -126,23 +131,63 @@ export default function NotifScreen({
           ))}
         </ScrollView>
       </View>
-      <TouchableOpacity
+      <View
         style={css`
-          background-color: black;
-          height: 80px;
-          padding: 0 30px;
+          display: flex;
+          flex-direction: row;
+          width: 100%;
         `}
-        onPress={onExit}
       >
-        <Text
+        <TouchableOpacity
           style={css`
-            margin: auto;
-            color: white;
+            background-color: black;
+            height: 100px;
+            padding: 0 10px;
+            border: 3px solid red;
+            flex-grow: 1;
           `}
+          onPress={onExit}
         >
-          Exit
-        </Text>
-      </TouchableOpacity>
+          <Text
+            style={css`
+              margin: auto;
+              color: white;
+              font-size: 25px;
+            `}
+          >
+            Exit
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={css`
+            background-color: black;
+            height: 100px;
+            padding: 0 10px;
+            border: 3px solid red;
+            flex-grow: 1;
+          `}
+          onPress={() => {
+            setMapOpen(!mapOpen);
+          }}
+        >
+          <Text
+            style={css`
+              margin: auto;
+              color: white;
+              font-size: 25px;
+            `}
+          >
+            {mapOpen ? "Close" : "Open"} Map
+          </Text>
+        </TouchableOpacity>
+      </View>
+      {mapOpen && (
+        <MapPopup
+          nUsers={users}
+          userId={userId}
+          notificationId={notificationId}
+        />
+      )}
     </View>
   );
 }

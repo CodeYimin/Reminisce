@@ -24,6 +24,80 @@ async function start() {
     res.send("Helo");
   });
 
+  app.get("/notification", async (req, res) => {
+    const { id, includePhoto } = req.query;
+
+    if (!id) {
+      res.sendStatus(400);
+      return;
+    }
+
+    const notification = await db.notification.findUnique({
+      where: { id: id as string },
+      include: {
+        photo: includePhoto === "1",
+        messages: {
+          include: {
+            owner: true,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
+        recipients: {
+          select: { id: true, username: true },
+        },
+      },
+    });
+
+    if (!notification) {
+      res.sendStatus(400);
+      return;
+    }
+
+    res.send(notification);
+  });
+
+  app.post("/sendNotificationMessage", async (req, res) => {
+    const userId = (req as any).session.userId;
+
+    if (!userId) {
+      res.sendStatus(400);
+      return;
+    }
+
+    const user = await db.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+
+    if (!user) {
+      res.sendStatus(400);
+      return;
+    }
+
+    const { notificationId, message } = req.body as {
+      notificationId: string;
+      message: string;
+    };
+
+    if (!notificationId || !message) {
+      res.sendStatus(400);
+      return;
+    }
+
+    await db.message.create({
+      data: {
+        content: message,
+        ownerId: userId,
+        notificationId: notificationId,
+      },
+    });
+
+    res.sendStatus(200);
+  });
+
   app.post("/uploadPhoto", async (req, res) => {
     const userId = (req as any).session.userId;
 
@@ -367,6 +441,11 @@ async function start() {
       where: {
         username: username,
       },
+      select: {
+        id: true,
+        username: true,
+        password: true,
+      },
     });
     if (!existingUser || existingUser.password !== password) {
       res.sendStatus(400);
@@ -375,7 +454,8 @@ async function start() {
 
     // @ts-ignore
     req.session.userId = existingUser.id;
-    res.sendStatus(200);
+    res.status(200);
+    res.send({ id: existingUser.id, username: existingUser.username });
   });
 
   app.listen(PORT, () => {

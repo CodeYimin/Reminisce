@@ -2,14 +2,16 @@ import { css } from "@emotion/native";
 import { registerRootComponent } from "expo";
 import { CameraCapturedPicture } from "expo-camera";
 import * as Location from "expo-location";
+import { addNotificationResponseReceivedListener } from "expo-notifications";
 import * as TaskManager from "expo-task-manager";
-import registerNNPushToken from "native-notify";
+import registerNNPushToken, { registerIndieID } from "native-notify";
 import { useEffect, useState } from "react";
 import { View } from "react-native";
 import CameraView from "./components/CameraView";
 import Friends from "./components/Friends";
 import Login from "./components/Login";
 import Navbar from "./components/Navbar";
+import NotifScreen from "./components/NotifScreen";
 import PhotoTakenPopup from "./components/PhotoTakenPopup";
 import Register from "./components/Register";
 import { URL } from "./components/consts";
@@ -52,9 +54,13 @@ async function setup() {
 }
 
 export default function App() {
+  const [notificationId, setNotificationId] = useState<string>();
   registerNNPushToken(19139, "DLvOby9T6bf4IVzrvpA6CN"); // DO NOT TOUCH THIS LINE WHATEVER YOU DO
   useEffect(() => {
     setup();
+    addNotificationResponseReceivedListener((response) => {
+      setNotificationId(response.notification.request.content.data.id);
+    });
   }, []);
 
   const [photo, setPhoto] = useState<
@@ -63,6 +69,15 @@ export default function App() {
   const [section, setSection] = useState<
     "register" | "login" | "friends" | "camera"
   >("camera");
+
+  if (notificationId) {
+    return (
+      <NotifScreen
+        notificationId={notificationId}
+        onExit={() => setNotificationId(undefined)}
+      />
+    );
+  }
 
   return (
     <View
@@ -82,13 +97,13 @@ export default function App() {
           />
           {photo && (
             <PhotoTakenPopup
-              photoUri={photo.uri}
+              photoUri={`data:image/jpg;base64,${photo.base64}`}
               onClose={() => setPhoto(undefined)}
               onSave={async (friendsAdded) => {
                 const res = await fetch(`http://${URL}/uploadPhoto`, {
                   method: "POST",
                   body: JSON.stringify({
-                    data: photo.base64,
+                    data: `data:image/jpg;base64,${photo.uri}`,
                     location: photo.location,
                     taggedUserIds: friendsAdded,
                   }),
@@ -134,7 +149,19 @@ export default function App() {
               },
               credentials: "include",
             });
-            return res.status === 200;
+            if (res.status === 200) {
+              await registerIndieID(
+                (
+                  await res.json()
+                ).id,
+                19139,
+                "DLvOby9T6bf4IVzrvpA6CN"
+              );
+              console.log(1);
+              return true;
+            } else {
+              return false;
+            }
           }}
         />
       ) : null}

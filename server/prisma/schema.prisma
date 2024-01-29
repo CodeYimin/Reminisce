@@ -63,7 +63,7 @@ model NotificationUser {
   notificationId String
   notification   Notification @relation(fields: [notificationId], references: [id])
 
-  sharingLocation Boolean  @default(true)
+  sharingLocation Boolean  @default(false)
   longitude       Decimal?
   latitude        Decimal?
 

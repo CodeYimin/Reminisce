@@ -171,8 +171,10 @@ export default function NotifScreen({
             background-color: black;
             height: 100px;
             padding: 0 10px;
-            border: 3px solid red;
+            border: 1px solid white;
             flex-grow: 1;
+            border-top-left-radius: 15px;
+            border-bottom-left-radius: 15px;
           `}
           onPress={onExit}
         >
@@ -191,8 +193,10 @@ export default function NotifScreen({
             background-color: black;
             height: 100px;
             padding: 0 10px;
-            border: 3px solid red;
+            border: 1px solid white;
             flex-grow: 1;
+            border-top-right-radius: 15px;
+            border-bottom-right-radius: 15px;
           `}
           onPress={() => {
             setMapOpen(!mapOpen);

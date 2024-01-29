@@ -1,6 +1,6 @@
 import { css } from "@emotion/native";
 import { useState } from "react";
-import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Text, TextInput, TouchableOpacity, View } from "react-native";
 
 export default function Register({
   onRegister,
@@ -25,15 +25,14 @@ export default function Register({
           margin-top: -120px;
         `}
       >
-        <Image
-          source={logoSrc}
-          style={{
-            width: 200 * 1.25, // Adjust the width as needed for a larger logo
-            height: 100 * 1.25, // Adjust the height as needed for a larger logo
-            marginLeft: -30, // Adjust the marginLeft to move the logo slightly to the left
-            marginTop: 20,
-          }}
-        />
+        <Text
+          style={css`
+            margin-top: 100px;
+            font-size: 50px;
+          `}
+        >
+          Register
+        </Text>
       </View>
       <TextInput
         style={css`

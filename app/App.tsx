@@ -172,14 +172,9 @@ export default function App() {
               credentials: "include",
             });
             if (res.status === 200) {
-              await registerIndieID(
-                (
-                  await res.json()
-                ).id,
-                19139,
-                "DLvOby9T6bf4IVzrvpA6CN"
-              );
-              setUserId((await res.json()).id);
+              const data = await res.json();
+              await registerIndieID(data.id, 19139, "DLvOby9T6bf4IVzrvpA6CN");
+              setUserId(data.id);
               return true;
             } else {
               return false;
